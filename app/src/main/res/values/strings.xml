@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Agent Telefonu</string>
+    <string name="accessibility_label">Agent Telefonu (sterowanie)</string>
+    <string name="accessibility_description">Pozwala aplikacji Agent Telefonu odczytywać zawartość ekranu oraz klikać, wpisywać tekst i przewijać na Twoje polecenie. Działa tylko podczas zadania uruchomionego przez Ciebie i można ją w każdej chwili zatrzymać.</string>
+</resources>
