@@ -41,7 +41,7 @@ jobs:
           unzip -q cmdline.zip -d cmdline-tools
           mkdir -p cmdline-tools/latest
           mv cmdline-tools/cmdline-tools/* cmdline-tools/latest/ || true
-          # ZAINSTALUJ platformę odpowiadającą compileSdk (tu: 35)
+          # Zainstaluj platformę zgodną z compileSdk = 35
           yes | cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-35" "build-tools;35.0.0"
           # zaakceptuj licencje
           yes | cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses || true
@@ -52,11 +52,13 @@ jobs:
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
 
-      - name: Ensure Gradle wrapper is executable
-        run: chmod +x ./gradlew
+      - name: Set up Gradle 8.9
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: '8.9'
 
       - name: Build Debug APK
-        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace --info
+        run: gradle :app:assembleDebug --no-daemon --stacktrace --info
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
