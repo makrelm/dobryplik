@@ -41,7 +41,7 @@ jobs:
           unzip -q cmdline.zip -d cmdline-tools
           mkdir -p cmdline-tools/latest
           mv cmdline-tools/cmdline-tools/* cmdline-tools/latest/ || true
-          # Zainstaluj platformę zgodną z compileSdk = 35
+          # Zainstaluj platformę odpowiadającą compileSdk = 35
           yes | cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-35" "build-tools;35.0.0"
           # zaakceptuj licencje
           yes | cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --licenses || true
@@ -49,18 +49,50 @@ jobs:
       - name: Export Android SDK env vars
         run: |
           echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+
+      - name: Verify environment
+        run: |
+          java -version
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls -la $HOME/android-sdk
+          cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/android-sdk --list || true
+          ls -la $HOME/android-sdk/platforms || true
 
       - name: Set up Gradle 8.9
         uses: gradle/gradle-build-action@v2
         with:
           gradle-version: '8.9'
 
-      - name: Build Debug APK
-        run: gradle :app:assembleDebug --no-daemon --stacktrace --info
+      - name: Resolve dependencies (debug) and save output
+        run: |
+          mkdir -p logs
+          gradle :app:dependencies --configuration debugCompileClasspath --no-daemon --stacktrace --info 2>&1 | tee logs/deps.log || true
+        continue-on-error: true
+
+      - name: Upload deps log
+        uses: actions/upload-artifact@v4
+        with:
+          name: deps-log
+          path: logs/deps.log
+
+      - name: Build Debug APK (with debug logging)
+        run: |
+          mkdir -p logs
+          gradle :app:assembleDebug --no-daemon --stacktrace --debug 2>&1 | tee logs/gradle-output.log
+        continue-on-error: false
+
+      - name: Upload gradle build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-log
+          path: logs/gradle-output.log
 
       - name: Upload Debug APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
